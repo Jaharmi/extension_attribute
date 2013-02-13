@@ -1,26 +1,46 @@
 #!/usr/bin/python
 
-#   Copyright (c) 2013 by Jeremy Reichman <jaharmi@jaharmi.com>
+# Copyright (c) 2013 by Jeremy Reichman <jaharmi@jaharmi.com>
 #
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import os
 import Foundation
-import sys
+from datetime import datetime
+from dateutil import parser
 
 xprotect_meta_plist = "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/XProtect.meta.plist"
 plist_nsdata, error_msg = Foundation.NSData.dataWithContentsOfFile_options_error_(xprotect_meta_plist, Foundation.NSUncachedRead, None)
 xprotect_meta, plist_format, error_msg = Foundation.NSPropertyListSerialization.propertyListFromData_mutabilityOption_format_errorDescription_(plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
 
-extension_attribute = xprotect_meta['LastModification']
-print('%s' % extension_attribute)
+# Property list contains a date string like "Thu, 24 Jan 2013 16:55:59 GMT"
+xprotect_date_format = "%a, %d %b %Y %H:%M:%S %Z"
+# Output needs to format as a date string like "2013-01-24 16:55:59"
+result_date_format = "%Y-%m-%d %H:%M:%S"
+
+# Fetch the date object with its original format
+xprotect_last_modification = xprotect_meta['LastModification']
+# Parse the original date string as a date object
+date_object = parser.parse(xprotect_last_modification)
+# Convert the date object to the new format
+# Currently outputs time naively without time zone offset from GMT
+extension_attribute = date_object.strftime(result_date_format)
+# Output the extension attribute as a string, avoiding further conversion
+extension_attribute_result = "<result>%s</result>" % extension_attribute
+print(extension_attribute_result)
