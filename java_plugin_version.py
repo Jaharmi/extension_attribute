@@ -1,0 +1,61 @@
+#!/usr/bin/python
+
+# Copyright (c) 2013 by Jeremy Reichman <jaharmi@jaharmi.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+import os.path
+import Foundation
+
+java_plugin_path = "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin"
+
+# Determine if the plugin path exists and is not a broken symlink
+if os.path.exists(java_plugin_path):
+    # Apple Java 6 plugin is a symlink
+    if os.path.islink(java_plugin_path):
+        java_symlink_target = "/System/Library/Java/Support/Deploy.bundle/Contents/Resources/JavaPlugin2_NPAPI.plugin"
+        java_jvm_plist = "/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Info.plist"
+        try:
+            plist_nsdata, error_msg = Foundation.NSData.dataWithContentsOfFile_options_error_(java_jvm_plist, Foundation.NSUncachedRead, None)
+            plist_data, plist_format, error_msg = Foundation.NSPropertyListSerialization.propertyListFromData_mutabilityOption_format_errorDescription_(plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
+            extension_attribute = plist_data['JavaVM']['JVMVersion']
+        except KeyError:
+            extension_attribute = None
+
+    # Oracle Java 7 plugin is a bundle
+    elif os.path.isdir(java_plugin_path):
+        java_jvm_plist = os.path.join(java_plugin_path, "Contents", "Info.plist")
+        try:
+            plist_nsdata, error_msg = Foundation.NSData.dataWithContentsOfFile_options_error_(java_jvm_plist, Foundation.NSUncachedRead, None)
+            plist_data, plist_format, error_msg = Foundation.NSPropertyListSerialization.propertyListFromData_mutabilityOption_format_errorDescription_(plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
+            extension_attribute = plist_data["CFBundleVersion"]
+        except KeyError:
+            extension_attribute = None
+
+    # Unexpected contents at this path
+    else:
+         extension_attribute = "Unknown"
+
+# Plugin path does not exist or is a broken symlink    
+else:
+    extension_attribute = "Missing"
+
+extension_attribute_result = "<result>%s</result>" % extension_attribute
+print(extension_attribute_result)
