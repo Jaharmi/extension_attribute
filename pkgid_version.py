@@ -30,7 +30,7 @@ pkgutil_path = "/usr/sbin/pkgutil"
 
 
 def list_packages_as_plist(this_pkg_id):
-    cmd = [pkgutil_path, "--pkgs={0}".format(this_pkg_id)]
+    cmd = [pkgutil_path, "--pkgs-plist"]
     cmd_output = subprocess.check_output(cmd)
     cmd_output_plist = plistlib.readPlistFromString(cmd_output)
     return cmd_output_plist
